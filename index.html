@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        #reader {
+            width: 300px;
+            margin: 20px auto;
+            border: 2px solid blue;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        #hasil {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f0f0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Scanner Sederhana</h1>
+    
+    <div id="reader"></div>
+    
+    <button onclick="mulai()">Mulai Kamera</button>
+    <button onclick="berhenti()">Berhenti</button>
+    
+    <div id="hasil">Hasil scan akan muncul di sini</div>
+
+    <!-- Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <script>
+        let scanner = null;
+        
+        function mulai() {
+            if (scanner) {
+                scanner.clear();
+            }
+            
+            scanner = new Html5Qrcode("reader");
+            
+            scanner.start(
+                { facingMode: "environment" }, // kamera belakang
+                { fps: 10, qrbox: 250 },
+                (hasil) => {
+                    // Sukses scan
+                    document.getElementById('hasil').innerHTML = 
+                        '✅ HASIL SCAN: <b>' + hasil + '</b>';
+                    console.log('Scan berhasil:', hasil);
+                },
+                (error) => {
+                    // Error (normal, akan terus mencoba)
+                    console.log('Mencoba...');
+                }
+            ).then(() => {
+                console.log('Scanner berhasil dimulai');
+            }).catch(err => {
+                document.getElementById('hasil').innerHTML = 
+                    '❌ ERROR: ' + err.message;
+                console.error('Error:', err);
+            });
+        }
+        
+        function berhenti() {
+            if (scanner && scanner.isScanning) {
+                scanner.stop().then(() => {
+                    scanner.clear();
+                    document.getElementById('hasil').innerHTML = 'Scanner dihentikan';
+                });
+            }
+        }
+    </script>
+</body>
+</html>
