@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Barcode Kamera - Panel A</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            width: 400px;
+            max-width: 95%;
+            text-align: center;
+        }
+        #reader {
+            width: 100%;
+            margin: 15px auto;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .panel {
+            background: #f8f9fa;
+            border-left: 5px solid #007bff;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            margin-top: 15px;
+        }
+        .panel h3 {
+            margin: 0 0 8px 0;
+            color: #007bff;
+        }
+        #statusA {
+            font-size: 16px;
+            color: #333;
+            word-break: break-word;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-start { background: #28a745; color: white; }
+        .btn-stop { background: #dc3545; color: white; }
+        .btn-reset { background: #6c757d; color: white; }
+        .note {
+            font-size: 12px;
+            color: #777;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📷 Scan Barcode dengan Kamera</h2>
+
+        <!-- Area kamera akan muncul di sini -->
+        <div id="reader"></div>
+
+        <div>
+            <button id="startBtn" class="btn-start">▶ Mulai Kamera</button>
+            <button id="stopBtn" class="btn-stop" disabled>⏹ Hentikan</button>
+        </div>
+
+        <div class="panel">
+            <h3>Panel A</h3>
+            <div id="statusA">-</div>
+        </div>
+
+        <button id="resetBtn" class="btn-reset">🔄 Reset Panel</button>
+        <div class="note">* Pastikan Anda mengizinkan akses kamera. Gunakan HTTPS atau localhost.</div>
+    </div>
+
+    <!-- Library html5-qrcode -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        (function() {
+            // === KONFIGURASI ===
+            const KODE_FILE_A = "FILE-A-001"; // Ganti dengan kode barcode Anda
+
+            const readerDiv = document.getElementById('reader');
+            const statusA = document.getElementById('statusA');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            let html5QrCode;
+
+            // Format tanggal dan jam Indonesia
+            function formatDateTime(date) {
+                const optionsDate = { day: 'numeric', month: 'long', year: 'numeric' };
+                const tanggal = date.toLocaleDateString('id-ID', optionsDate);
+                const jam = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                return `${tanggal} jam ${jam}`;
+            }
+
+            // Fungsi saat barcode berhasil dibaca
+            function onScanSuccess(decodedText) {
+                if (decodedText === KODE_FILE_A) {
+                    const sekarang = new Date();
+                    statusA.textContent = `✅ Sudah dipinjam pada tanggal ${formatDateTime(sekarang)}`;
+                } else {
+                    statusA.textContent = `❌ Barcode "${decodedText}" bukan File A.`;
+                }
+                // Opsional: hentikan pemindaian setelah satu scan
+                // stopScanning();
+            }
+
+            function onScanError(errorMessage) {
+                // Biarkan kosong agar tidak memenuhi console
+            }
+
+            function startScanning() {
+                html5QrCode = new Html5Qrcode("reader");
+                html5QrCode.start(
+                    { facingMode: "environment" }, // kamera belakang
+                    {
+                        fps: 10,    // frame per detik
+                        qrbox: { width: 250, height: 250 } // area pemindaian
+                    },
+                    onScanSuccess,
+                    onScanError
+                ).then(() => {
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                }).catch(err => {
+                    alert("Gagal mengakses kamera: " + err);
+                    console.error(err);
+                });
+            }
+
+            function stopScanning() {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().then(() => {
+                        html5QrCode.clear();
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                    }).catch(err => console.error(err));
+                }
+            }
+
+            function resetPanel() {
+                statusA.textContent = '-';
+            }
+
+            // Event listener tombol
+            startBtn.addEventListener('click', startScanning);
+            stopBtn.addEventListener('click', stopScanning);
+            resetBtn.addEventListener('click', resetPanel);
+
+            // Hentikan scanner saat halaman ditutup (opsional)
+            window.addEventListener('beforeunload', () => {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
